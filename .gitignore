@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+
+# Base de datos generada
+base_datos/*.json
+
+# Variables de entorno
+.env
+
+# VS Code
+.vscode/

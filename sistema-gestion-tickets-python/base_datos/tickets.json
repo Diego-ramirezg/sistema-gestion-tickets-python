@@ -1,0 +1,46 @@
+{
+    "contador_inc": 2,
+    "contador_req": 2,
+    "tickets": [
+        {
+            "id": "INC-0000",
+            "tipo_ticket": "Incidente",
+            "detalle": "Sistema lento",
+            "categoria": "software",
+            "fecha": "12/08/2026 12:59",
+            "estado": "Pendiente",
+            "prioridad": "Alta",
+            "usuario": "admin"
+        },
+        {
+            "id": "QER-0000",
+            "tipo_ticket": "Requerimiento",
+            "detalle": "Deseo que se instale power bi en mi pc",
+            "categoria": "instalacion de software",
+            "fecha": "12/08/2026 13:00",
+            "estado": "Pendiente",
+            "prioridad": "Media",
+            "usuario": "admin"
+        },
+        {
+            "id": "INC-0001",
+            "tipo_ticket": "Incidente",
+            "detalle": "Impresora presenta fallas",
+            "categoria": "impresora",
+            "fecha": "12/08/2026 17:00",
+            "estado": "Resuelto",
+            "prioridad": "Alta",
+            "usuario": "administrador"
+        },
+        {
+            "id": "QER-0001",
+            "tipo_ticket": "Requerimiento",
+            "detalle": "Por favor configurar correo para data_time@outlook.com",
+            "categoria": "configuracion de correo",
+            "fecha": "12/08/2026 17:00",
+            "estado": "Pendiente",
+            "prioridad": "Alta",
+            "usuario": "administrador"
+        }
+    ]
+}
