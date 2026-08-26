@@ -1,88 +1,79 @@
 import json
 import os
 from datetime import datetime
-ARCHIVO_BD = "base_datos/tickets.json"
-#--- lista de opciones ---
-lista_requerimientos = ['instalacion de software', 'nuevo acceso', 'configuracion de correo', 'solicitud de hardware'] 
-lista_incidencias = ['software', 'hardware', 'impresora', 'red', 'accesos']
-lista_prioridades = ['Alta', 'Media', 'Baja']
-#--- estructura de datos y contadores ---
-tickets = []
-contador_inc = 0
-contador_req = 0
-#--- funcion cargar datos ---
-def cargar_datos():
-    global tickets, contador_inc, contador_req
-    if os.path.exists(ARCHIVO_BD):
-        try:
-            with open(ARCHIVO_BD, "r", encoding='utf-8') as file:
-                datos = json.load(file)
-                tickets = datos.get('tickets', [])
-                contador_req = datos.get('contador_req',1)
-                contador_inc = datos.get('contador_inc',1)
-                print("[SISTEMA] Base de datos cargada correctamente")
-        except json.JSONDecodeError:
-            print(f"[AVISO] El archivo {ARCHIVO_BD} está dañado.")
-            tickets, contador_req, contador_inc = [], 0, 0
-        except Exception as e:
-            print(f"[ERROR INESPERADO] {e}")
-            tickets = []
-    else:
-        print("[SISTEMA] No se detecto base de datos previa. Creando sistema")
-        tickets, contador_inc, contador_req = [], 0,0
-#--- funcion guardar datos ---
-def guardar_datos():
-    try:
-        datos_a_guardar = {
-            "contador_inc": contador_inc,
-            "contador_req": contador_req,
-            "tickets": tickets
+"""clase que representa la unidad de tickets"""
+class Ticket:
+    def __init__(self,id,usuario, tipo, categoria, motivo, prioridad, fecha = None, estado= 'Pendiente' ):
+        self.id = id
+        self.usuario = usuario
+        self.tipo = tipo
+        self.estado = estado
+        self.categoria = categoria
+        self.motivo = motivo
+        self.prioridad = prioridad
+        self.fecha = fecha if fecha else datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    """propiedad para transformar el objeto a un dict para json"""
+    def to_dict(self):
+        return{
+            "id": id,
+            "usuario": self.usuario,
+            "tipo": self.tipo,
+            "categoria": self.categoria,
+            "motivo": self.motivo,
+            "prioridad": self.prioridad,
+            "fecha": self.fecha,
+            "estado": self.estado
         }
-        with open(ARCHIVO_BD, "w", encoding='utf-8') as file:
-            json.dump(datos_a_guardar, file, indent=4, ensure_ascii=False)
-    except Exception as e:
-        print(f"[ERROR] No se pudo guardar la información: {e}")
-
-def crear_ticket(usuario, tipo_ticket, categoria, motivo, prioridad):
-    global contador_inc, contador_req
-    if tipo_ticket == "Incidente":
-        codigo = f"INC-{contador_inc:04}"
-        contador_inc += 1
-    else:
-        codigo = f"QER-{contador_req:04}"
-        contador_req += 1
-
-    fecha_formateada = datetime.now().strftime("%d/%m/%Y %H:%M")
-    nuevo_ticket = {
-        "id": codigo,
-        "tipo_ticket": tipo_ticket,
-        "detalle": motivo,
-        "categoria": categoria,
-        "fecha": fecha_formateada,
-        "estado": "Pendiente",
-        "prioridad": prioridad,
-        "usuario": usuario
-    }
-    tickets.append(nuevo_ticket)
-    guardar_datos()
-    return nuevo_ticket
-
-def obtener_tickets():
-    return tickets
-
-def actualizar_estado(id_ticket, nuevo_estado):
-    for t in tickets:
-        if t['id'].upper() == id_ticket.upper():
-            t['estado'] = nuevo_estado
-            guardar_datos()
-            return True
-    return False
-
-def eliminar_ticket_por_id(id_ticket):
-    global tickets
-    largo_inicial = len(tickets)
-    tickets = [t for t in tickets if t['id'].upper() != id_ticket.upper()]
-    if len(tickets) < largo_inicial:
-        guardar_datos()
-        return True
-    return False
+class GestorTickets:
+    def __init__(self,archivo_bd = 'base_datos/tickets.json'):
+        self.archivo_bd = archivo_bd
+        self.lista_requerimientos = ['instalacion de software', 'nuevo acceso', 'configuracion de correo', 'solicitud de hardware']
+        self.lista_incidentes = ['software', 'hardware', 'impresora', 'red', 'accesos']
+        self.prioridades = ['Alta', 'Media', 'Baja']
+        self.contador_req = 1
+        self.inc = 1
+        #cargar los datos automaticamente
+        self.cargar_datos()
+    def cargar_datos(self):
+        if os.path.exists(self.archivo_bd):
+            try:
+                with open(self.archivo_bd,"r",encoding='utf-8') as file:
+                    datos = json.load(file)
+                    self.tickets = [Ticket(**t) for t in datos.get('tickets,[]')]
+                    self.contador_req = datos.get('contador_req',0)
+                    self.contador_inc = datos.get('contador_inc',0)
+                print("Datos cargados correctamente")
+            except json.JSONDecodeError:
+                print(f"Base de datos dañada: {self.archivo_bd}")
+            except Exception as e:
+                print(f"Error inesperado: {e}")
+                self.tickets = []
+    def guardar_datos(self):
+        """serializar los objetos y guardar el estado actual"""
+        try:
+            os.makedirs(os.path.dirname(self.archivo_bd), exist_ok= True)
+            datos_guardar = {
+                "contador_inc": self.contador_inc,
+                "contador_req": self.contador_req,
+                "tickets" : [t.to_dict() for t in self.tickets]
+            }
+            with open(self.archivo_bd,"w", encoding='utf-8') as file:
+                json.dump(datos_guardar, file, indent= 4, ensure_ascii= False)
+                print("Información guardada con exito")
+        except Exception as e:
+            print("No se pudo guardar información: {e}")
+    def crear_ticket(self,usuario, tipo_ticket, categoria,motivo,prioridad):
+        """Genera un nuevo ticket, actualiza contadores y guarda la bd"""
+        #generacion de id incremental
+        if tipo_ticket.lower() == "incidencia":
+            self.contador_inc += 1
+            id_ticket = f"INC-{self.contador_inc:04d}"
+        else:
+            self.contador_req += 1
+            id_ticket = f"REQ-{self.contador_req:04d}"
+        #instanciar un nuevo ticket
+        nuevo_ticket = Ticket(id_ticket, usuario, tipo_ticket, categoria,motivo,prioridad)
+        #almacenar ticket
+        self.tickets.append(nuevo_ticket)
+        self.guardar_datos()
+        return id_ticket
